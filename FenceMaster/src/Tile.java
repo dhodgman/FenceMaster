@@ -18,8 +18,8 @@ public class Tile{
     /** The board's dimension. */
     private int dim;
     
-    /** An adjacency record that contains the coordinates of the adjacent tiles ([-1, -1] = board edge). */
-    private int[][] adj_record;
+    /** An adjacency record that contains the tile IDs of the adjacent tiles (-1 = board edge). */
+    private int[] adj_record;
     
     /** A constant representing the number of adjacent tiles. */
     public static final int NUM_ADJ = 6;
@@ -41,9 +41,8 @@ public class Tile{
     	setPiece(piece);
     	setX(x);
     	setY(y);
-    	int[][] adj_record = new int[NUM_ADJ][2];
-    	adj_record[0][0] = 2;
-//    	adj_record = calcAdj(adj_record);
+    	int[] adj_record = new int[NUM_ADJ];
+    	adj_record = calcAdj(adj_record);
     	setVisited(false);
     	setGroup(0);
     }
@@ -80,8 +79,14 @@ public class Tile{
     }
     
     /** Returns the adjacency record. */
-    public int[][] getAdj() {
+    public int[] getAdj() {
         return adj_record;
+    }
+    
+    /** Returns a specific element in the adjacency record. 
+     * @param pos The position of the requested element relative to this tile. */
+    public int getAdjElement(int pos) {
+        return adj_record[pos];
     }
     
     /** Returns the visited flag. */
@@ -107,57 +112,76 @@ public class Tile{
 /* The class methods */
     /** Creates and fills the adjacency record.
      * @param num_adj A two-dimensional adjacency record for the tile (assume number of adjacent tile = 6). */
-    public int[][] calcAdj(int[][] num_adj) {
+    public int[] calcAdj(int[] num_adj) {
     	// Iterates through the surrounding tiles.
     	for(int i = 0; i < NUM_ADJ; i++) {
+    		int[] coord = new int[2];
+    		coord = adjCoord(i);
+    		int x = coord[0];
+    		int y = coord[1];
         	// Checks to see if the tile is on the first half of the board.
-        	if(0 <= getX() && getX() < dim - 1) {
+        	if(0 <= x && x < dim) {
         		// Checks to see if the tile is within the y-coordinate bounds of the board.
-        		if(getY() < 0 || getY() > dim - 1 + getX()) {
-            		num_adj[i][0] = -1;
-            		num_adj[i][1] = -1;
+        		if(y < 0 || y > dim - 1 + x) {
+            		num_adj[i] = -1;
+        		} else {
+        			// Assigns the adjacent tile ID.
+        			num_adj[i] = (int)( 0.5*(x*x + (2*dim - 1)*x) + y);
         		}
         	} 
         	// Checks to see if the tile is on the second half of the board.
-        	else if(dim - 1 <= getX() && getX() < 2*dim - 2) {
+        	else if(dim <= x && x <= 2*dim - 2) {
                 // Checks to see if the tile is within the y-coordinate bounds of the board.
-                if(getY() < getX() - dim + 1 || getY() > 2*dim -2) {
-              		num_adj[i][0] = -1;
-                    num_adj[i][1] = -1;
+                if(y < x - dim + 1 || y > 2*dim -2) {
+              		num_adj[i] = -1;
+                } else {
+                	//Assigns the adjacent tile ID.
+                	num_adj[i] = (int)(0.5*((6*x + 4)*dim - 2*dim*dim - x*x - 5*x - 2) + y);
                 }
         	} 
         	// Tile not in x-coordinate bounds of the board.
         	else {
-        		num_adj[i][0] = -1;
-        		num_adj[i][1] = -1;
-        	}
-        	// Assigns the coordinates of the adjacent tiles.
-        	if(i == 0) {
-        		num_adj[i][0] = getX() - 1;
-        		num_adj[i][1] = getY() - 1;
-        	}
-        	if(i == 1) {
-        		num_adj[i][0] = getX() - 1;
-        		num_adj[i][1] = getY();
-        	}
-        	if(i == 2) {
-        		num_adj[i][0] = getX();
-        		num_adj[i][1] = getY() + 1;
-        	}
-        	if(i == 3) {
-        		num_adj[i][0] = getX() + 1;
-        		num_adj[i][1] = getY() + 1;
-        	}
-        	if(i == 4) {
-        		num_adj[i][0] = getX() + 1;
-        		num_adj[i][1] = getY();
-        	}
-        	if(i == 5) {
-        		num_adj[i][0] = getX();
-        		num_adj[i][1] = getY() - 1;
+        		num_adj[i] = -1;
         	}
     	}
-    	
+    	if(GameSimulation.DEBUG) {
+    		for(int q = 0; q < NUM_ADJ; q++) {
+    			System.out.println(num_adj[q]);
+    		}
+    		System.out.println("-----");
+    	}
     	return num_adj;
-    }    
+    } 
+    
+    /** Takes an adjacency position (0 to 5) and returns the coordinates of that tile relevant to the current one.
+     * @param pos The position of the desired tile relevant to the current tile. */
+    public int[] adjCoord(int pos) {
+    	int[] coord = new int[2];
+    	
+    	if(pos == 0) {
+    		coord[0] = getX() - 1;
+    		coord[1] = getY() - 1;
+    	}
+    	if(pos == 1) {
+    		coord[0] = getX() - 1;
+    		coord[1] = getY();
+    	}
+    	if(pos == 2) {
+    		coord[0] = getX();
+    		coord[1] = getY() + 1;
+    	}
+    	if(pos == 3) {
+    		coord[0] = getX() + 1;
+    		coord[1] = getY() + 1;
+    	}
+    	if(pos == 4) {
+    		coord[0] = getX() + 1;
+    		coord[1] = getY();
+    	}
+    	if(pos == 5) {
+    		coord[0] = getX();
+    		coord[1] = getY() - 1;
+    	}
+    	return coord;
+    }
 }
