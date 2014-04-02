@@ -1,6 +1,6 @@
 /* COMP30024 Artificial Intelligence
  * FenceMaster AI
- * Author: Ryan Hodgman <hodgmanr>
+ * Authors: Rosa Luna <rluna> and Ryan Hodgman <hodgmanr>
  */
 
 import java.io.FileNotFoundException;
@@ -27,11 +27,11 @@ public class GameSimulation{
 			System.out.println("Couldn't find the data file!");
 			System.exit(0);
 		}
+        // Prints out the full list of tiles and their attributes (piece type, x-coord and y-coord).
         if(DEBUG) {
         	for(int t = 0; t < check.getTileList().size(); t++) {
                 System.out.println(check.getTileList().get(t).getPiece() + ", [" + check.getTileList().get(t).getX() + ","+ check.getTileList().get(t).getY() + "]");
         	}
-        	//System.out.println(check.getList().get(0).getAdjElement(3));
         }
     }
 }

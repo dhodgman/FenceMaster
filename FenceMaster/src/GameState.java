@@ -1,6 +1,6 @@
 /* COMP30024 Artificial Intelligence
  * FenceMaster AI
- * Author: Ryan Hodgman <hodgmanr>
+ * Authors: Rosa Luna <rluna> and Ryan Hodgman <hodgmanr>
  */
 
 import java.io.File;
@@ -17,6 +17,9 @@ public class GameState{
     
     /** The ArrayList containing all of the tile groups. */
     private ArrayList<TileGroup> group_list;
+    
+    /** The current group being fed into the group list. NOTE: Poor modular practice. */
+    private TileGroup group;
     
     /** The dimension of the board being checked. */
     private int dim;
@@ -55,6 +58,12 @@ public class GameState{
             String temp = line.replaceAll("\\s+", "");
             tile_pieces = tile_pieces + temp;
         }
+        // Input error catch - Not enough pieces supplied for the given board dimension.
+        if(tile_pieces.length() != num_tiles) {
+        	System.out.println("ERROR: Number of tiles supplied does not match the given dimension!");
+        	System.exit(0);
+        }
+        // Prints out the full list of tile pieces in order from [0, 0] to  [dim - 2, dim - 2].
         if(GameSimulation.DEBUG) {
         	System.out.println(tile_pieces);
         }
@@ -88,15 +97,24 @@ public class GameState{
         }
         // Hunts through the tile list and sections the pieces on the board into groups, where a 'group' refers to a 
         // collection of same-coloured pieces that are all connected to each other via other same-coloured pieces.
+        group_list = new ArrayList<TileGroup>();
         assignGroups();
+        // Prints out the groups and their members.
+        if(GameSimulation.DEBUG) {
+            for(int q = 0; q < group_list.size(); q++) {
+                for(int i = 0; i < group_list.get(q).group_tiles.size(); i++) {
+                    System.out.println("Group ID: " + group_list.get(q).getID() + ", Colour: " + group_list.get(q).getPlayer() + " , Tile_ID: " + group_list.get(q).group_tiles.get(i));
+                }
+            }
+        }
     }
 
     
 	/** Iterates through the tile list and creates group objects that store all connected tiles of the same colour. */
 	public void assignGroups(){
 		// Initializes arrays that store the tile IDs of the black and white pieces in the game state.
-		ArrayList<Integer> white = new ArrayList<Integer>();
 		ArrayList<Integer> black = new ArrayList<Integer>();
+		ArrayList<Integer> white = new ArrayList<Integer>();
 		
 		// Iterates through the tile list and assigns the tiles to the appropriate colour list.
 		for(int i = 0; i < tile_list.size(); i++) {
@@ -109,22 +127,29 @@ public class GameState{
 		}
 		
 		// Calculates the groups present in the current game state.
-		calcGroups(white);		
-		calcGroups(black);
+		calcGroups(black, false);
+		calcGroups(white, true);		
 	}
 	
 	/** Hunts through the supplied list of same-coloured pieces to find all connected groups, then initializes group objects
 	 * to represent them. 
-	 * @param coll A collection of tiles of a particular colour in the current board state. */
-	public void calcGroups(ArrayList<Integer> coll){
+	 * @param coll A collection of tiles of a particular colour in the current board state. 
+	 * @param called True if the calcGroups() method has been called before, false otherwise.*/
+	public void calcGroups(ArrayList<Integer> coll, Boolean called){
 		// Initializes a queue designed to hold a list of tiles in the same group as the current tile.
 		ArrayList<Integer> queue = new ArrayList<Integer>();
-		// Initializes an initial group to serve as the first current group, then adds it to the group list.
-		int group_num = 1;
 		char coll_colour = tile_list.get(coll.get(0)).getPiece();
-		TileGroup group = new TileGroup(group_num, coll_colour);
-		group_list.add(group);
-		group_num++;
+		// If the method has never been called before, creates an initial group and adds it to the group list.
+		if(!called) {
+			group = new TileGroup(group_list.size() + 1, coll_colour);
+			group_list.add(group);
+		} else {
+			// The method has been called before, so reset the colour of the last group in the group list.
+			int last = group_list.size();
+			group_list.get(last - 1).setPlayer(coll_colour);
+		}
+		// Identifies if a new group needs to be created.
+		Boolean new_group = false;
 		
 		// Iterates through the collection of same-coloured tiles looking for groups.
 		for(int i = 0; i < coll.size(); i++) {
@@ -132,18 +157,21 @@ public class GameState{
 			if(tile_list.get(coll.get(i)).getGroup() == 0 && !tile_list.get(coll.get(i)).getVisited() && queue.isEmpty()) {
 				// If this is the case, then a new tile not related to any previously created group needs to be explored.
 				exploreTile(coll.get(i), group, queue);
+				new_group = true;
+				// Check to see if there are any tiles to be dealt with in the queue.
+				while(!queue.isEmpty()){
+					// A group is yet to be fully explored, so continue exploring the new tiles in the queue.
+					exploreTile(queue.get(0), group, queue);
+					// Finished exploring the current tile, so eject it from the queue.
+					queue.remove(0);
+				}
 			}
-			// Check to see if there are any tiles to be dealt with in the queue.
-			while(!queue.isEmpty()){
-				// A group is yet to be fully explored, so continue exploring the new tiles in the queue.
-				exploreTile(queue.get(0), group, queue);
-				// Finished exploring the current tile, so eject it from the queue.
-				queue.remove(0);
+			// The old group has been fully explored, so create a new group and add it to the group list.
+			if(new_group) {
+				group = new TileGroup(group_list.size() + 1, coll_colour);
+				group_list.add(group);
+				new_group = false;
 			}
-			// The group has been fully explored, so create a new group, add it to the group list and increase the group number.
-			group = new TileGroup(group_num, coll_colour);
-			group_list.add(group);
-			group_num++;
 		}
 	}
 	
@@ -154,14 +182,17 @@ public class GameState{
 	public void exploreTile(int tile_ID, TileGroup current_group, ArrayList<Integer> queue){
 		char coll_colour = tile_list.get(tile_ID).getPiece();
 		// Adds the tile to the current group and alters the tile's attributes to reflect this.
-		current_group.group_list.add(tile_ID);
+		current_group.group_tiles.add(tile_ID);
 		tile_list.get(tile_ID).setGroup(current_group.getID());
 		tile_list.get(tile_ID).setVisited(true);
 		// Adds the adjacent tiles of the same colour to the queue.
 		for(int q = 0; q < Tile.NUM_ADJ; q++) {
-			// Checks that the adjacent tile being examined is of the same colour and hasn't been visited yet.
-			if(tile_list.get(tile_list.get(tile_ID).getAdjElement(q)).getPiece() == coll_colour && !tile_list.get(tile_list.get(tile_ID).getAdjElement(q)).getVisited()) {
-				queue.add(tile_list.get(tile_ID).getAdjElement(q));
+			// Checks that the adjacent tile exists (is not off the board edge).
+			if(tile_list.get(tile_ID).getAdjElement(q) != -1) {
+				// Checks that the adjacent tile being examined is of the same colour, hasn't been visited yet and isn't already in the queue.
+				if(tile_list.get(tile_list.get(tile_ID).getAdjElement(q)).getPiece() == coll_colour && !tile_list.get(tile_list.get(tile_ID).getAdjElement(q)).getVisited() && !queue.contains(tile_list.get(tile_ID).getAdjElement(q))) {
+					queue.add(tile_list.get(tile_ID).getAdjElement(q));
+				}
 			}
 		}
 	}

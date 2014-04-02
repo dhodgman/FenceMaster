@@ -1,6 +1,6 @@
 /* COMP30024 Artificial Intelligence
  * FenceMaster AI
- * Author: Ryan Hodgman <hodgmanr>
+ * Authors: Rosa Luna <rluna> and Ryan Hodgman <hodgmanr>
  */
 
 /** A representation of the board tiles. */
@@ -41,7 +41,7 @@ public class Tile{
     	setPiece(piece);
     	setX(x);
     	setY(y);
-    	int[] adj_record = new int[NUM_ADJ];
+    	adj_record = new int[NUM_ADJ];
     	adj_record = calcAdj(adj_record);
     	setVisited(false);
     	setGroup(0);
@@ -144,6 +144,7 @@ public class Tile{
         		num_adj[i] = -1;
         	}
     	}
+    	// Prints out the adjacency array for each tile on the board.
     	if(GameSimulation.DEBUG) {
     		for(int q = 0; q < NUM_ADJ; q++) {
     			System.out.println(num_adj[q]);

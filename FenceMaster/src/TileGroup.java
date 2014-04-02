@@ -1,16 +1,15 @@
-import java.util.ArrayList;
-
 /* COMP30024 Artificial Intelligence
  * FenceMaster AI
  * Authors: Rosa Luna <rluna> and Ryan Hodgman <hodgmanr>
  */
 
+import java.util.ArrayList;
 
 /** Represents a group of connected tiles of the same colour. */
 public class TileGroup{
 /* The class variables */
 	/** An array that stores all of the tile IDs in this group. */
-	public ArrayList<Integer> group_list;
+	public ArrayList<Integer> group_tiles;
 	
 	/** Stores the colour of this group of tiles. */
 	private char player_colour;
@@ -25,7 +24,7 @@ public class TileGroup{
     public TileGroup(int ID, char player_colour) {
     	this.ID = ID;
     	this.player_colour = player_colour;
-    	ArrayList<Integer> group_list = new ArrayList<Integer>();
+    	group_tiles = new ArrayList<Integer>();
     }
 
 /* The getter and setter methods */
@@ -37,5 +36,10 @@ public class TileGroup{
 	/** Returns the colour of the player this group belongs to. */
 	public char getPlayer() {
 		return player_colour;
+	}   
+	
+	/** Sets the colour of the player this group belongs to. */
+	public void setPlayer(char colour) {
+		player_colour = colour;
 	}   
 }
