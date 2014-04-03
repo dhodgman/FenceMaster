@@ -107,6 +107,10 @@ public class GameState{
                 }
             }
         }
+        // Checks each group to see 
+        for(int i = 0; i < group_list.size(); i++) {
+        	tripodChecker(group_list.get(i));
+        }
     }
 
     
@@ -196,5 +200,38 @@ public class GameState{
 			}
 		}
 	}
+	
+	/** Takes as input a group of board pieces of a single colour and then checks whether those pieces form a tripod.
+	 * @param group The group of pieces being checked for a tripod win condition. 
+	 * @return Returns true if the supplied group forms a tripod. */
+	public Boolean tripodChecker(TileGroup group){
+		// A group can only form a tripod if it has at least as many members as it takes to stretch across a side plus two.
+		if(group.group_tiles.size() < dim + 2) {
+			return false;
+		}
+		// Creates an array to store the ID of all of the tiles in the group that are on the edge of the board, but are not corner pieces.
+		ArrayList<Integer> side_tiles = new ArrayList<Integer>();
+		int edge_count = 0;
+		for(int i = 0; i < group.group_tiles.size(); i++) {
+			for(int q = 0; q < Tile.NUM_ADJ; q++) {
+				if(tile_list.get(group.group_tiles.get(i)).getAdjElement(q) == -1) {
+					edge_count++;
+				}
+			}
+			// If a tile is an edge piece but not a corner piece then two of its adjacency entries will equal -1.
+			if(edge_count == 2) {
+				side_tiles.add(group.group_tiles.get(i));
+			}
+			edge_count = 0;
+		}
+		// A group can only form a tripod if it consists of at least three edge pieces.
+		if(side_tiles.size() < 3) {
+			return false;
+		}
+		
+		return true;
+	}
+	
+	
 }
   
