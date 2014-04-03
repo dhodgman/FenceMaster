@@ -196,5 +196,52 @@ public class GameState{
 			}
 		}
 	}
+	
+	/** Goes through an ArrayList of edge tiles to return the number of board sides that are covered by them
+	 * @param coll ArrayList of all the edge tiles in a group */
+	public int numberOfSides(ArrayList<Integer> coll){
+		int num_sides = 0;
+		boolean side0 = false;
+		boolean side1 = false;
+		boolean side2 = false;
+		boolean side3 = false;
+		boolean side4 = false;
+		boolean side5 = false;
+		
+		for(int j=0; j<coll.size();j++){
+			if(!side0&&(tile_list.get(j).getAdjElement(0)==-1)&&(tile_list.get(j).getAdjElement(5)==-1)){
+				side0 = true;
+				num_sides++;
+			}else if(!side1&&(tile_list.get(j).getAdjElement(0)==-1)&&(tile_list.get(j).getAdjElement(1)==-1)){
+				side1 = true;
+				num_sides++;
+			}else if(!side2&&(tile_list.get(j).getAdjElement(1)==-1)&&(tile_list.get(j).getAdjElement(2)==-1)){
+				side2 = true;
+				num_sides++;
+			}else if(!side3&&(tile_list.get(j).getAdjElement(2)==-1)&&(tile_list.get(j).getAdjElement(3)==-1)){
+				side3 = true;
+				num_sides++;
+			}else if(!side4&&(tile_list.get(j).getAdjElement(3)==-1)&&(tile_list.get(j).getAdjElement(4)==-1)){
+				side4 = true;
+				num_sides++;
+			}else if(!side5&&(tile_list.get(j).getAdjElement(4)==-1)&&(tile_list.get(j).getAdjElement(5)==-1)){
+				side5 = true;
+				num_sides++;
+			}
+		}
+		return num_sides;
+	}
+	
+	public boolean drawState(){
+		int i=0;
+		while(i<tile_list.size()){
+			if(tile_list.get(i).getPiece() == '-'){
+				return false;
+			}
+			i++;
+		}
+		return true;
+	}
+	
 }
   
