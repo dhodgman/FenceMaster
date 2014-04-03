@@ -3,6 +3,8 @@
  * Authors: Rosa Luna <rluna> and Ryan Hodgman <hodgmanr>
  */
 
+import java.util.ArrayList;
+
 /** A representation of the board tiles. */
 public class Tile{
 /* The class variables */
@@ -29,6 +31,12 @@ public class Tile{
     
     /** A group identifier to indicate which group this tile is part of. */
     private int group;
+    
+    /** A priority value in respect to the black tile groups. */
+    private int black_priority;
+    
+    /** A priority value in respect to the white tile groups. */
+    private int white_priority;
 
 /* The constructor(s) */
     /** Creates a new tile object.
@@ -108,6 +116,16 @@ public class Tile{
     public void setGroup(int num) {
     	this.group = num;
     }
+    
+    /** Returns the priority relative to all black tiles. */
+    public int getBlackPriority() {
+        return black_priority;
+    }
+    
+    /** Returns the priority relative to all white tiles. */
+    public int getWhitePriority() {
+        return white_priority;
+    }
 
 /* The class methods */
     /** Creates and fills the adjacency record.
@@ -184,5 +202,21 @@ public class Tile{
     		coord[1] = getY() - 1;
     	}
     	return coord;
+    }
+    
+    /** Calcuates the priorities for this tile, where a tile's priority is determined by the number of white/black pieces adjacent to it.
+     * @param tile_list A list of tiles that represents the board state. */
+    public void calcPriorities(ArrayList<Tile> tile_list) {
+    	for (int i = 0; i < NUM_ADJ; i++) {
+    		if(adj_record[i] != -1){
+    			// Increments the priorities if the loop finds a black/white piece adjacent to this tile.
+        		if(tile_list.get(adj_record[i]).getPiece() == 'B') {
+        			black_priority++;
+        		}
+        		if(tile_list.get(adj_record[i]).getPiece() == 'W') {
+        			white_priority++;
+        		}
+    		}
+    	}
     }
 }

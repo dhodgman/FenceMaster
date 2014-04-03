@@ -15,13 +15,13 @@ public class GameSimulation{
     public static final String DATA_PATH = "data";
     
     /** The checker. */
-    private static GameState check;
+    private static GameState state;
     
     /** Start-up method. Creates the game and runs it.
      * @param args Command-line arguments (ignored). */
     public static void main(String[] args) {
         try {
-			check = new GameState();
+			state = new GameState();
 		} catch (FileNotFoundException e) {
 			e.printStackTrace();
 			System.out.println("Couldn't find the data file!");
@@ -29,8 +29,8 @@ public class GameSimulation{
 		}
         // Prints out the full list of tiles and their attributes (piece type, x-coord and y-coord).
         if(DEBUG) {
-        	for(int t = 0; t < check.getTileList().size(); t++) {
-                System.out.println(check.getTileList().get(t).getPiece() + ", [" + check.getTileList().get(t).getX() + ","+ check.getTileList().get(t).getY() + "]");
+        	for(int t = 0; t < state.getTileList().size(); t++) {
+                System.out.println(state.getTileList().get(t).getPiece() + ", [" + state.getTileList().get(t).getX() + ","+ state.getTileList().get(t).getY() + "]");
         	}
         }
     }

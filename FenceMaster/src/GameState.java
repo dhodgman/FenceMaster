@@ -41,11 +41,53 @@ public class GameState{
     }
     
 /* The constructor(s) */
-    /** Creates a new WinChecker object. */
+    /** Creates a new WinChecker object. 
+     * @throws FileNotFoundException */
     public GameState()
     throws FileNotFoundException {
+    	// Creates the board state from an inputted .txt file.
+    	initTiles();
+    	// Assign the black/white priorities for each tile on the board.
+    	for(int i = 0; i < tile_list.size(); i++) {
+    		tile_list.get(i).calcPriorities(tile_list);
+    	}
+        // Hunts through the tile list and sections the pieces on the board into groups, where a 'group' refers to a 
+        // collection of same-coloured pieces that are all connected to each other via other same-coloured pieces.
+        group_list = new ArrayList<TileGroup>();
+        assignGroups();
+        // Prints out the groups and their members.
+        if(GameSimulation.DEBUG) {
+            for(int q = 0; q < group_list.size(); q++) {
+                for(int i = 0; i < group_list.get(q).group_tiles.size(); i++) {
+                    System.out.println("Group ID: " + group_list.get(q).getID() + ", Colour: " + group_list.get(q).getPlayer() + " , Tile_ID: " + group_list.get(q).group_tiles.get(i));
+                }
+            }
+        }
+        // Checks each group to see if it forms a tripod.
+        for(int i = 0; i < group_list.size(); i++) {
+        	if(tripodChecker(group_list.get(i))) {
+        		// Congratulations, a player has won the game via a tripod!
+        		if(group_list.get(i).getPlayer() == 'B') { System.out.println("Black wins!"); }
+        		if(group_list.get(i).getPlayer() == 'W') { System.out.println("White wins!"); }
+        		System.out.println("Tripod");
+        		System.exit(0);
+        	}
+        }
+        
+        // After checking for both tripod and loop win conditions,determines whether the game is a draw.
+        if(drawState()) {
+        	System.out.println("Game is a draw.");
+        } else {
+        	System.out.println("Neither player has won yet. Please place another piece.");
+        }
+    }
+    
+    /** Initialises a tile list that represents the current board state. 
+     * @throws FileNotFoundException */
+    public void initTiles() throws FileNotFoundException{
     	// Scans the data file.
         Scanner file_scanner = new Scanner(new File(GameSimulation.DATA_PATH + "/test_input.txt"));
+        // Scanner file_scanner = new Scanner(System.in)); SWITCH TO THIS FOR THE FINAL SUBMISSION!!!!!
         String line = file_scanner.nextLine().replaceAll("\\s+", "");
         // Extracts the board dimension from the first line of the data file, then calculates the board properties.
         dim = Integer.parseInt(line);
@@ -58,6 +100,7 @@ public class GameState{
             String temp = line.replaceAll("\\s+", "");
             tile_pieces = tile_pieces + temp;
         }
+        file_scanner.close();
         // Input error catch - Not enough pieces supplied for the given board dimension.
         if(tile_pieces.length() != num_tiles) {
         	System.out.println("ERROR: Number of tiles supplied does not match the given dimension!");
@@ -95,24 +138,7 @@ public class GameState{
         	Tile tile = new Tile(dim, tile_pieces.charAt(i), coord[i][0], coord[i][1]);
         	tile_list.add(i, tile);
         }
-        // Hunts through the tile list and sections the pieces on the board into groups, where a 'group' refers to a 
-        // collection of same-coloured pieces that are all connected to each other via other same-coloured pieces.
-        group_list = new ArrayList<TileGroup>();
-        assignGroups();
-        // Prints out the groups and their members.
-        if(GameSimulation.DEBUG) {
-            for(int q = 0; q < group_list.size(); q++) {
-                for(int i = 0; i < group_list.get(q).group_tiles.size(); i++) {
-                    System.out.println("Group ID: " + group_list.get(q).getID() + ", Colour: " + group_list.get(q).getPlayer() + " , Tile_ID: " + group_list.get(q).group_tiles.get(i));
-                }
-            }
-        }
-        // Checks each group to see 
-        for(int i = 0; i < group_list.size(); i++) {
-        	tripodChecker(group_list.get(i));
-        }
     }
-
     
 	/** Iterates through the tile list and creates group objects that store all connected tiles of the same colour. */
 	public void assignGroups(){
@@ -228,10 +254,59 @@ public class GameState{
 		if(side_tiles.size() < 3) {
 			return false;
 		}
-		
-		return true;
+		// If a group contacts three or more sides, then it has formed a tripod.
+		if(numSides(side_tiles) >= 3) {
+			return true;
+		} else {
+			return false;
+		}
 	}
 	
-	
+	/** Goes through an ArrayList of edge tiles to return the number of board sides that the group contacts.
+	 * @param edge_tiles ArrayList of all of the edge tiles in a group. 
+	 * @return Returns the number of board sides that the group contacts. */
+	public int numSides(ArrayList<Integer> edge_tiles){
+		int side0 = 0;
+		int side1 = 0;
+		int side2 = 0;
+		int side3 = 0;
+		int side4 = 0;
+		int side5 = 0;
+		
+		// Identifies which side of the board each edge piece contacts.
+		for(int j = 0; j < edge_tiles.size(); j++){
+			if(tile_list.get(edge_tiles.get(j)).getAdjElement(0) == -1 && tile_list.get(edge_tiles.get(j)).getAdjElement(5) == -1){
+				side0 = 1;
+			} else if(tile_list.get(edge_tiles.get(j)).getAdjElement(0) == -1 && tile_list.get(edge_tiles.get(j)).getAdjElement(1) == -1){
+				side1 = 1;
+			} else if(tile_list.get(edge_tiles.get(j)).getAdjElement(1) == -1 && tile_list.get(edge_tiles.get(j)).getAdjElement(2) == -1){
+				side2 = 1;
+			} else if(tile_list.get(edge_tiles.get(j)).getAdjElement(2) == -1 && tile_list.get(edge_tiles.get(j)).getAdjElement(3) == -1){
+				side3 = 1;
+			} else if(tile_list.get(edge_tiles.get(j)).getAdjElement(3) == -1 && tile_list.get(edge_tiles.get(j)).getAdjElement(4) == -1){
+				side4 = 1;
+			} else if(tile_list.get(edge_tiles.get(j)).getAdjElement(4) == -1 && tile_list.get(edge_tiles.get(j)).getAdjElement(5) == -1){
+				side5 = 1;
+			}
+		}
+		
+		// Counts the number of board edges contacted by the group.
+		int num_sides = side0 + side1 + side2 + side3 + side4 + side5;
+		
+		return num_sides;
+	}
+
+	/** Checks whether the board is full of pieces and thus whether the game is a draw.
+	 * @return Returns true if the game is a draw. */
+	public boolean drawState(){
+		int i = 0;
+		while(i < tile_list.size()){
+			if(tile_list.get(i).getPiece() == '-'){
+				return false;
+			}
+			i++;
+		}
+		return true;
+	}	
 }
   
