@@ -204,7 +204,7 @@ public class Tile{
     	return coord;
     }
     
-    /** Calcuates the priorities for this tile, where a tile's priority is determined by the number of white/black pieces adjacent to it.
+    /** Calculates the priorities for this tile, where a tile's priority is determined by the number of white/black pieces adjacent to it.
      * @param tile_list A list of tiles that represents the board state. */
     public void calcPriorities(ArrayList<Tile> tile_list) {
     	for (int i = 0; i < NUM_ADJ; i++) {

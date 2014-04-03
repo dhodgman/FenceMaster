@@ -24,6 +24,21 @@ public class GameState{
     /** The dimension of the board being checked. */
     private int dim;
     
+    /** A constant representing the minimum number of tiles needed to make a loop. */
+    public static final int LOOP_MIN = 6;
+    
+	/**Flags if white has won via a loop*/
+	private boolean white_loop;
+	
+	/**Flags if black has won via a loop*/
+	private boolean black_loop;
+	
+	/**Flags if white has won via a tripod*/
+	private boolean white_tripod;
+	
+	/**Flags if black has won via a tripod*/
+	private boolean black_tripod;
+    
 /* The getter and setter methods */   
     /** Returns the dimension of the board. */
     public int getDimension() {
@@ -63,22 +78,70 @@ public class GameState{
                 }
             }
         }
-        // Checks each group to see if it forms a tripod.
+        
+     // Checks each group to see if it forms a loop.
+        black_loop = false;
+        white_loop = false;
         for(int i = 0; i < group_list.size(); i++) {
-        	if(tripodChecker(group_list.get(i))) {
+        	if(group_list.get(i).getPlayer()=='B'){
+        		black_loop = loopChecker(group_list.get(i));
+        	}
+        	if(group_list.get(i).getPlayer()=='W'){
+        		white_loop = loopChecker(group_list.get(i));
+        	}
+        	if(black_loop||white_loop){
+        		break;
+        	}
+        }
+
+        
+        // Checks each group to see if it forms a tripod.
+        black_tripod = false;
+        white_tripod = false;
+        for(int i = 0; i < group_list.size(); i++) {
+        //	if(tripodChecker(group_list.get(i))) {
         		// Congratulations, a player has won the game via a tripod!
-        		if(group_list.get(i).getPlayer() == 'B') { System.out.println("Black wins!"); }
-        		if(group_list.get(i).getPlayer() == 'W') { System.out.println("White wins!"); }
-        		System.out.println("Tripod");
-        		System.exit(0);
+        //		if(group_list.get(i).getPlayer() == 'B') { System.out.println("Black"); }
+        //		if(group_list.get(i).getPlayer() == 'W') { System.out.println("White"); }
+        //		System.out.println("Tripod");
+        //		System.exit(0);
+        //	}
+        	if(group_list.get(i).getPlayer()=='B'){
+        		black_tripod = tripodChecker(group_list.get(i));
+        	}
+        	if(group_list.get(i).getPlayer()=='W'){
+        		white_tripod = tripodChecker(group_list.get(i));
+        	}
+        	if(black_tripod||white_tripod){
+        		break;
         	}
         }
         
-        // After checking for both tripod and loop win conditions,determines whether the game is a draw.
-        if(drawState()) {
-        	System.out.println("Game is a draw.");
+        if(white_loop && white_tripod){
+        	System.out.println("White");
+        	System.out.println("Both");
+        } else if(black_loop && black_tripod){
+        	System.out.println("Black");
+        	System.out.println("Both");
+        } else if(white_loop){
+        	System.out.println("White");
+        	System.out.println("Loop");
+        } else if(black_loop){
+        	System.out.println("Black");
+        	System.out.println("Loop");
+        } else if(white_tripod){
+        	System.out.println("White");
+        	System.out.println("Tripod");
+        } else if(black_tripod){
+        	System.out.println("Black");
+        	System.out.println("Tripod");
+        } else if(drawState()) {
+        	// After checking for both tripod and loop win conditions,determines whether the game is a draw.
+        	System.out.println("Draw");
+        	System.out.println("Nil");
         } else {
-        	System.out.println("Neither player has won yet. Please place another piece.");
+        	System.out.println("None");
+        	System.out.println("Nil");
         }
     }
     
@@ -307,6 +370,206 @@ public class GameState{
 			i++;
 		}
 		return true;
-	}	
+	}
+	
+	/** Takes as input a group of board pieces of a single colour and then checks whether those pieces form a loop.
+	 * @param group The group of pieces being checked for a loop win condition. 
+	 * @return Returns true if the supplied group forms a loop. */
+	public boolean loopChecker(TileGroup group){
+		if(group.group_tiles.size()<LOOP_MIN) {
+			return false;
+		}
+		ArrayList<Integer> queue_first = new ArrayList<Integer>();	//Stores the immediately adjacent tiles that don't contain the same colour piece according to priority
+		ArrayList<Integer> queue_track = new ArrayList<Integer>();	//Stores the next adjacent tiles that don't contain the same colour piece in the current path being taken according to priority
+		queue_first = buildQueueFirst(group);
+		
+		
+		Integer current_id;
+		int num_different_tiles_visited;
+		int num_different_tiles;
+		int edge_side;
+		if(group.getPlayer()=='B'){
+	    
+			while(!queue_first.isEmpty()){
+				current_id = queue_first.get(0);
+				tile_list.get(current_id).setVisited(true);
+				
+				while(current_id != -1){
+					num_different_tiles_visited = 0;
+					num_different_tiles = 0;
+					edge_side = 0;
+					for(int i = 0; i < Tile.NUM_ADJ; i++){
+						if(tile_list.get(current_id).getAdjElement(i) != -1 && tile_list.get(tile_list.get(current_id).getAdjElement(i)).getPiece()!='B'){
+							if(!tile_list.get(tile_list.get(current_id).getAdjElement(i)).getVisited()){
+								//add to queue track
+								// look at black priority
+								if(queue_track.isEmpty()){
+									queue_track.add(tile_list.get(current_id).getAdjElement(i));
+								}else{
+									int k=0;
+									while(k < queue_track.size() && tile_list.get(current_id).getAdjElement(i) != queue_track.get(k) && tile_list.get(tile_list.get(current_id).getAdjElement(i)).getBlackPriority() <= tile_list.get(queue_track.get(k)).getBlackPriority()){
+										k++;
+									}
+									if(k == queue_track.size()){
+										queue_track.add(tile_list.get(current_id).getAdjElement(i));
+									}else if(tile_list.get(current_id).getAdjElement(i) != queue_track.get(k)){
+										queue_track.add(k,tile_list.get(current_id).getAdjElement(i)); // add to kth place
+									}
+								}
+																
+							} else {
+								num_different_tiles_visited++;
+							}
+							num_different_tiles++;
+						} else if(tile_list.get(current_id).getAdjElement(i)==-1){
+							edge_side++;
+						}
+					}
+					//outside for loop
+					tile_list.get(current_id).setVisited(true);
+					queue_track.remove(current_id);
+					if(edge_side >= 2){
+						//have hit an edge tile and hence not in a loop
+						queue_track.clear();
+					} else if(num_different_tiles_visited == num_different_tiles  && queue_track.isEmpty()){
+						//inside a loop
+						return true;
+					} 
+					
+					queue_first.remove(current_id);
+					if(queue_track.isEmpty()){
+						current_id = -1;
+					} else {
+						current_id = queue_track.get(0);
+					}
+				}
+				
+			}
+		}
+		
+		// looking for white loops
+		if(group.getPlayer()=='W'){
+		    
+			while(!queue_first.isEmpty()){
+				current_id = queue_first.get(0);
+				tile_list.get(current_id).setVisited(true);
+				
+				while(current_id != -1){
+					if(!queue_track.isEmpty()){
+						System.out.println("QUEUE_TRACK:");
+						for(int i=0; i<queue_track.size();i++){
+							System.out.println("["+queue_track.get(i)+"]");
+						}
+					}
+					num_different_tiles_visited = 0;
+					num_different_tiles = 0;
+					edge_side = 0;
+					for(int i = 0; i < Tile.NUM_ADJ; i++){
+						if(tile_list.get(current_id).getAdjElement(i) != -1 && tile_list.get(tile_list.get(current_id).getAdjElement(i)).getPiece()!='W'){
+							if(!tile_list.get(tile_list.get(current_id).getAdjElement(i)).getVisited()){
+								//add to queue track
+								// look at black priority
+								if(queue_track.isEmpty()){
+									queue_track.add(tile_list.get(current_id).getAdjElement(i));
+								}else{
+									int k=0;
+									while(k < queue_track.size() && tile_list.get(current_id).getAdjElement(i) != queue_track.get(k) && tile_list.get(tile_list.get(current_id).getAdjElement(i)).getWhitePriority() <= tile_list.get(queue_track.get(k)).getWhitePriority()){
+										k++;
+									}
+									if(k == queue_track.size()){
+										queue_track.add(tile_list.get(current_id).getAdjElement(i));
+									}else if(tile_list.get(current_id).getAdjElement(i) != queue_track.get(k)){
+										queue_track.add(k,tile_list.get(current_id).getAdjElement(i)); // add to kth place
+									}
+								}
+																
+							} else {
+								num_different_tiles_visited++;
+							}
+							num_different_tiles++;
+						} else if(tile_list.get(current_id).getAdjElement(i)==-1){
+							edge_side++;
+						}
+					}
+					//outside for loop
+					tile_list.get(current_id).setVisited(true);
+					queue_track.remove(current_id);
+					if(edge_side >= 2){
+						//have hit an edge tile and hence not in a loop
+						queue_track.clear();
+					} else if(num_different_tiles_visited == num_different_tiles && queue_track.isEmpty()){ //here is problem with loop checker - it is coming up with loops when it gets to a last tile in queue 2 which happens to be surrounded by visted tiles or black ones and hence guard says it's a loop 
+						//inside a loop
+						return true;
+					}
+					queue_first.remove(current_id);
+					if(queue_track.isEmpty()){
+						current_id = -1;	//Flag to indicate queue_track is empty
+					} else {
+						current_id = queue_track.get(0);
+					}
+				}
+				
+			}
+		}
+
+		return false; // will probably be removed
+	}
+	
+	/** Builds the ArrayList that stores the immediately adjacent tiles that don't contain the same colour piece according to priority*/
+	public ArrayList<Integer> buildQueueFirst(TileGroup group){
+		ArrayList<Integer> queue_first = new ArrayList<Integer>();
+		int current_id;
+		int k;
+		
+		//set queue_first
+		for(int i=0; i<group.group_tiles.size();i++){
+			for(int j = 0; j < Tile.NUM_ADJ; j++){
+				if(group.getPlayer() == 'B'){
+					//look at tiles that are != black
+					current_id = tile_list.get(group.group_tiles.get(i)).getAdjElement(j);
+					if(current_id != -1 && tile_list.get(current_id).getPiece() != 'B'){
+						// look at black priority
+						if(queue_first.isEmpty()){
+							queue_first.add(current_id);
+						}else{
+							k=0;
+							while(k < queue_first.size() && current_id != queue_first.get(k) && tile_list.get(current_id).getBlackPriority() <= tile_list.get(queue_first.get(k)).getBlackPriority()){
+								k++;
+							}
+							if(k == queue_first.size()){
+								queue_first.add(current_id);
+							}else if(current_id != queue_first.get(k)){
+								queue_first.add(k,current_id); // add to kth place
+							}
+						}
+					}
+				} else if(group.getPlayer() == 'W'){
+					//look at tiles that are != white
+					current_id = tile_list.get(group.group_tiles.get(i)).getAdjElement(j);
+					if(current_id != -1 && tile_list.get(current_id).getPiece() != 'W'){
+						// look at White priority
+						if(queue_first.isEmpty()){
+							queue_first.add(current_id);
+						}else{
+							k=0;
+							while(k < queue_first.size() && current_id != queue_first.get(k) && tile_list.get(current_id).getWhitePriority() <= tile_list.get(queue_first.get(k)).getWhitePriority()){
+								k++;
+							}
+							if(k == queue_first.size()){
+								queue_first.add(current_id);
+							}else if(current_id != queue_first.get(k)){
+								queue_first.add(k,current_id); // add to kth place
+							}
+						}
+					}
+				}
+			}
+
+		}
+		return queue_first;
+	}
+	
 }
+
+
   
