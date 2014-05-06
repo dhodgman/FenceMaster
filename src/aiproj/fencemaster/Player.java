@@ -2,6 +2,7 @@ package aiproj.fencemaster;
 
 import java.io.PrintStream;
 
+
 /*   
  *   Player Interface:
  *      Includes basic functions required by referee 

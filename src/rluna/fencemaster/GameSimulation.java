@@ -10,7 +10,7 @@ import java.io.FileNotFoundException;
  * Handles initialization, input and rendering. */
 public class GameSimulation{
 	/** A variable used to activate or deactivate debugging mode. */
-    public static boolean DEBUG = false;
+    public static boolean DEBUG = true;
     
     /** The checker. */
     private static GameState state;

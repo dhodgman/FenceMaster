@@ -6,18 +6,19 @@
 package rluna.fencemaster;
 
 import java.util.ArrayList;
+import aiproj.fencemaster.*;
 
 /** A representation of the board tiles. */
-public class Tile{
+public class Tile implements Piece{
 /* The class variables */
-    /** Record of the piece occupying this tile ("B", "W" or "-"). */
-    private char piece;
+    /** Record of the piece occupying this tile (WHITE: 1, BLACK: 2, EMPTY: 0, INVALID: -1). */
+    private int piece;
     
-    /** The tile's x-coordinate. */
-    private int x_coord;
+    /** The tile's column. */
+    private int col;
     
-    /** The tile's y-coordinate. */
-    private int y_coord;
+    /** The tile's row. */
+    private int row;
     
     /** The board's dimension. */
     private int dim;
@@ -40,52 +41,35 @@ public class Tile{
     /** A priority value in respect to the white tile groups. */
     private int white_priority;
 
-/* The constructor(s) */
-    /** Creates a new tile object.
-     * @param dim The dimension of the hexagonal board.
-     * @param piece The piece (if any) occupying this tile.
-     * @param x The tile's x board location.
-     * @param y The tile's y board location. */
-    public Tile(int dim, char piece, int x, int y) {
-    	this.dim = dim;
-    	setPiece(piece);
-    	setX(x);
-    	setY(y);
-    	adj_record = new int[NUM_ADJ];
-    	adj_record = calcAdj(adj_record);
-    	setVisited(false);
-    	setGroup(0);
-    }
-
 /* The getter and setter methods */
     /** Returns the piece (if any) occupying the tile. */
-    public char getPiece() {
+    public int getPiece() {
         return piece;
     }
     
     /** Sets the piece occupying the tile. */
-    public void setPiece(char new_piece) {
+    public void setPiece(int new_piece) {
         this.piece = new_piece;
     }
     
-    /** Returns the x-coordinate of the tile. */
-    public int getX() {
-        return x_coord;
+    /** Returns the column of the tile. */
+    public int getCol() {
+        return col;
     }
     
-    /** Sets the x-coordinate of the tile. */
-    public void setX(int x) {
-    	this.x_coord = x;
+    /** Sets the column of the tile. */
+    public void setCol(int col) {
+    	this.col = col;
     }
     
-    /** Returns the y-coordinate of the tile. */
-    public int getY() {
-        return y_coord;
+    /** Returns the row of the tile. */
+    public int getRow() {
+        return row;
     }
     
-    /** Sets the y-coordinate of the tile. */
-    public void setY(int y) {
-    	this.y_coord = y;
+    /** Sets the row of the tile. */
+    public void setRow(int row) {
+    	this.row = row;
     }
     
     /** Returns the adjacency record. */
@@ -129,6 +113,23 @@ public class Tile{
         return white_priority;
     }
 
+/* The constructor(s) */
+    /** Creates a new tile object.
+     * @param dim The dimension of the hexagonal board.
+     * @param piece The piece (if any) occupying this tile.
+     * @param col The tile's column.
+     * @param row The tile's row. */
+    public Tile(int dim, int piece, int col, int row) {
+    	this.dim = dim;
+    	setPiece(piece);
+    	setCol(col);
+    	setRow(row);
+    	adj_record = new int[NUM_ADJ];
+    	adj_record = calcAdj(adj_record);
+    	setVisited(false);
+    	setGroup(0);
+    }
+
 /* The class methods */
     /** Creates and fills the adjacency record.
      * @param num_adj A two-dimensional adjacency record for the tile (assume number of adjacent tile = 6). */
@@ -137,26 +138,26 @@ public class Tile{
     	for(int i = 0; i < NUM_ADJ; i++) {
     		int[] coord = new int[2];
     		coord = adjCoord(i);
-    		int x = coord[0];
-    		int y = coord[1];
+    		int col = coord[0];
+    		int row = coord[1];
         	// Checks to see if the tile is on the first half of the board.
-        	if(0 <= x && x < dim) {
+        	if(0 <= col && col < dim) {
         		// Checks to see if the tile is within the y-coordinate bounds of the board.
-        		if(y < 0 || y > dim - 1 + x) {
+        		if(row < 0 || row > dim - 1 + col) {
             		num_adj[i] = -1;
         		} else {
         			// Assigns the adjacent tile ID.
-        			num_adj[i] = (int)( 0.5*(x*x + (2*dim - 1)*x) + y);
+        			num_adj[i] = (int)( 0.5*(col*col + (2*dim - 1)*col) + row);
         		}
         	} 
         	// Checks to see if the tile is on the second half of the board.
-        	else if(dim <= x && x <= 2*dim - 2) {
+        	else if(dim <= col && col <= 2*dim - 2) {
                 // Checks to see if the tile is within the y-coordinate bounds of the board.
-                if(y < x - dim + 1 || y > 2*dim -2) {
+                if(row < col - dim + 1 || row > 2*dim - 2) {
               		num_adj[i] = -1;
                 } else {
                 	//Assigns the adjacent tile ID.
-                	num_adj[i] = (int)(0.5*((6*x + 4)*dim - 2*dim*dim - x*x - 5*x - 2) + y);
+                	num_adj[i] = (int)(0.5*((6*col + 4)*dim - 2*dim*dim - col*col - 5*col - 2) + row);
                 }
         	} 
         	// Tile not in x-coordinate bounds of the board.
@@ -180,28 +181,28 @@ public class Tile{
     	int[] coord = new int[2];
     	
     	if(pos == 0) {
-    		coord[0] = getX() - 1;
-    		coord[1] = getY() - 1;
+    		coord[0] = getCol() - 1;
+    		coord[1] = getRow() - 1;
     	}
     	if(pos == 1) {
-    		coord[0] = getX() - 1;
-    		coord[1] = getY();
+    		coord[0] = getCol() - 1;
+    		coord[1] = getRow();
     	}
     	if(pos == 2) {
-    		coord[0] = getX();
-    		coord[1] = getY() + 1;
+    		coord[0] = getCol();
+    		coord[1] = getRow() + 1;
     	}
     	if(pos == 3) {
-    		coord[0] = getX() + 1;
-    		coord[1] = getY() + 1;
+    		coord[0] = getCol() + 1;
+    		coord[1] = getRow() + 1;
     	}
     	if(pos == 4) {
-    		coord[0] = getX() + 1;
-    		coord[1] = getY();
+    		coord[0] = getCol() + 1;
+    		coord[1] = getRow();
     	}
     	if(pos == 5) {
-    		coord[0] = getX();
-    		coord[1] = getY() - 1;
+    		coord[0] = getCol();
+    		coord[1] = getRow() - 1;
     	}
     	return coord;
     }
@@ -212,10 +213,10 @@ public class Tile{
     	for (int i = 0; i < NUM_ADJ; i++) {
     		if(adj_record[i] != -1){
     			// Increments the priorities if the loop finds a black/white piece adjacent to this tile.
-        		if(tile_list.get(adj_record[i]).getPiece() == 'B') {
+        		if(tile_list.get(adj_record[i]).getPiece() == BLACK) {
         			black_priority++;
         		}
-        		if(tile_list.get(adj_record[i]).getPiece() == 'W') {
+        		if(tile_list.get(adj_record[i]).getPiece() == WHITE) {
         			white_priority++;
         		}
     		}

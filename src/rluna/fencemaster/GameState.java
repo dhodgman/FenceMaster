@@ -12,7 +12,6 @@ import java.util.Scanner;
 /** Checks a board state to determine if either player has won the game. */
 public class GameState{
 /* The class variables */
-	
     /** The ArrayList containing all of the board tiles. */
     private ArrayList<Tile> tile_list;
     
