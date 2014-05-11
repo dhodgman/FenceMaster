@@ -3,15 +3,13 @@
  * Authors: Rosa Luna <rluna> and Ryan Hodgman <hodgmanr>
  */
 
-import java.io.File;
-import java.io.FileNotFoundException;
+package rluna.fencemaster;
+
 import java.util.ArrayList;
-import java.util.Scanner;
 
 /** Checks a board state to determine if either player has won the game. */
 public class GameState{
 /* The class variables */
-	
     /** The ArrayList containing all of the board tiles. */
     private ArrayList<Tile> tile_list;
     
@@ -21,8 +19,8 @@ public class GameState{
     /** The current group being fed into the group list. NOTE: Poor modular practice. */
     private TileGroup group;
     
-    /** The dimension of the board being checked. */
-    private int dim;
+    /** The number of tiles on the board. */
+    private int num_tiles;
     
     /** A constant representing the minimum number of tiles needed to make a loop. */
     public static final int LOOP_MIN = 6;
@@ -39,12 +37,7 @@ public class GameState{
 	/**Flags if black has won via a tripod*/
 	private boolean black_tripod;
     
-/* The getter and setter methods */   
-    /** Returns the dimension of the board. */
-    public int getDimension() {
-    	return dim;
-    }
-    
+/* The getter and setter methods */       
     /** Returns the tile list. */
     public ArrayList<Tile> getTileList() {
     	return tile_list;
@@ -55,13 +48,17 @@ public class GameState{
     	return group_list;
     }
     
+    /** Returns the number of board tiles. */
+    public int getNumTiles() {
+    	return num_tiles;
+    }
+    
 /* The constructor(s) */
-    /** Creates a new WinChecker object. 
-     * @throws FileNotFoundException */
-    public GameState()
-    throws FileNotFoundException {
+    /** Creates a new GameState object. 
+     * @param dim The board dimension. */
+    public GameState(int dim) {
     	// Creates the board state from an inputted .txt file.
-    	initTiles();
+    	initTiles(dim);
     	// Assign the black/white priorities for each tile on the board.
     	for(int i = 0; i < tile_list.size(); i++) {
     		tile_list.get(i).calcPriorities(tile_list);
@@ -71,7 +68,7 @@ public class GameState{
         group_list = new ArrayList<TileGroup>();
         assignGroups();
         // Prints out the groups and their members.
-        if(GameSimulation.DEBUG) {
+        if(Rluna.DEBUG) {
             for(int q = 0; q < group_list.size(); q++) {
                 for(int i = 0; i < group_list.get(q).group_tiles.size(); i++) {
                     System.out.println("Group ID: " + group_list.get(q).getID() + ", Colour: " + group_list.get(q).getPlayer() + " , Tile_ID: " + group_list.get(q).group_tiles.get(i));
@@ -79,10 +76,11 @@ public class GameState{
             }
         }
         
-     // Checks each group to see if it forms a loop.
+        // Checks each group to see if it forms a loop.
         black_loop = false;
         white_loop = false;
         for(int i = 0; i < group_list.size(); i++) {
+        	resetVistedFlags();
         	if(group_list.get(i).getPlayer()=='B'){
         		black_loop = loopChecker(group_list.get(i));
         	}
@@ -93,112 +91,54 @@ public class GameState{
         		break;
         	}
         }
-
-        
+   
         // Checks each group to see if it forms a tripod.
         black_tripod = false;
         white_tripod = false;
         for(int i = 0; i < group_list.size(); i++) {
-        //	if(tripodChecker(group_list.get(i))) {
-        		// Congratulations, a player has won the game via a tripod!
-        //		if(group_list.get(i).getPlayer() == 'B') { System.out.println("Black"); }
-        //		if(group_list.get(i).getPlayer() == 'W') { System.out.println("White"); }
-        //		System.out.println("Tripod");
-        //		System.exit(0);
-        //	}
         	if(group_list.get(i).getPlayer()=='B'){
-        		black_tripod = tripodChecker(group_list.get(i));
+        		black_tripod = tripodChecker(group_list.get(i), dim);
         	}
         	if(group_list.get(i).getPlayer()=='W'){
-        		white_tripod = tripodChecker(group_list.get(i));
+        		white_tripod = tripodChecker(group_list.get(i), dim);
         	}
         	if(black_tripod||white_tripod){
         		break;
         	}
         }
-        
-        if(white_loop && white_tripod){
-        	System.out.println("White");
-        	System.out.println("Both");
-        } else if(black_loop && black_tripod){
-        	System.out.println("Black");
-        	System.out.println("Both");
-        } else if(white_loop){
-        	System.out.println("White");
-        	System.out.println("Loop");
-        } else if(black_loop){
-        	System.out.println("Black");
-        	System.out.println("Loop");
-        } else if(white_tripod){
-        	System.out.println("White");
-        	System.out.println("Tripod");
-        } else if(black_tripod){
-        	System.out.println("Black");
-        	System.out.println("Tripod");
-        } else if(drawState()) {
-        	// After checking for both tripod and loop win conditions,determines whether the game is a draw.
-        	System.out.println("Draw");
-        	System.out.println("Nil");
-        } else {
-        	System.out.println("None");
-        	System.out.println("Nil");
-        }
+        calcResult();
     }
     
     /** Initialises a tile list that represents the current board state. 
-     * @throws FileNotFoundException */
-    public void initTiles() throws FileNotFoundException{
-    	// Scans the data file.
-        Scanner file_scanner = new Scanner(new File(GameSimulation.DATA_PATH + "/test_input.txt"));
-        // Scanner file_scanner = new Scanner(System.in)); SWITCH TO THIS FOR THE FINAL SUBMISSION!!!!!
-        String line = file_scanner.nextLine().replaceAll("\\s+", "");
-        // Extracts the board dimension from the first line of the data file, then calculates the board properties.
-        dim = Integer.parseInt(line);
-        int num_lines = 2*dim - 1;
-        int num_tiles = 3*dim*dim - 3*dim + 1;
-        // Creates a temporary string to store the piece configuration of the board state.
-        String tile_pieces = new String("");
-        for (int i = 0; i < num_lines; i++) {
-            line = file_scanner.nextLine();
-            String temp = line.replaceAll("\\s+", "");
-            tile_pieces = tile_pieces + temp;
-        }
-        file_scanner.close();
-        // Input error catch - Not enough pieces supplied for the given board dimension.
-        if(tile_pieces.length() != num_tiles) {
-        	System.out.println("ERROR: Number of tiles supplied does not match the given dimension!");
-        	System.exit(0);
-        }
-        // Prints out the full list of tile pieces in order from [0, 0] to  [dim - 2, dim - 2].
-        if(GameSimulation.DEBUG) {
-        	System.out.println(tile_pieces);
-        }
-        // Creates a coordinate array to store the board position of each tile.
+     * @param dim The board dimension. */
+    public void initTiles(int dim) {
+        num_tiles = 3*dim*dim - 3*dim + 1;
+		// Creates a coordinate array to represent the board position of each tile.
         int[][] coord = new int[num_tiles][2];
-    	int x = 0;
-    	int y = 0;
+    	int col = 0;
+    	int row = 0;
     	int increment = 0;
         for (int i = 0; i < num_tiles; i++) {
-        	if(y - x == dim && x < dim - 1){
-        		x++;
-        		y = 0;
-        	} else if(y - x == dim && x == dim - 1) {
-        		x++;
-        		y = 1;
+        	if(row - col == dim && col < dim - 1){
+        		col++;
+        		row = 0;
+        	} else if(row - col == dim && col == dim - 1) {
+        		col++;
+        		row = 1;
         		increment++;
-        	} else if(y + increment - x == dim && x > dim - 1) {
-    			x++;
+        	} else if(row + increment - col == dim && col > dim - 1) {
+    			col++;
     			increment++;
-    			y = increment;
+    			row = increment;
     		}
-        	coord[i][0] = x;
-        	coord[i][1] = y;
-        	y++;
+        	coord[i][0] = col;
+        	coord[i][1] = row;
+        	row++;
         }
         // Creates and fills a new ArrayList with the required tile objects.
         tile_list = new ArrayList<Tile>(num_tiles);
         for (int i = 0; i < num_tiles; i++) {
-        	Tile tile = new Tile(dim, tile_pieces.charAt(i), coord[i][0], coord[i][1]);
+        	Tile tile = new Tile(dim, Rluna.EMPTY, coord[i][0], coord[i][1]);
         	tile_list.add(i, tile);
         }
     }
@@ -211,10 +151,10 @@ public class GameState{
 		
 		// Iterates through the tile list and assigns the tiles to the appropriate colour list.
 		for(int i = 0; i < tile_list.size(); i++) {
-			if(tile_list.get(i).getPiece() == 'B') {
+			if(tile_list.get(i).getPiece() == Rluna.BLACK) {
 				black.add(i);
 			}
-			if(tile_list.get(i).getPiece() == 'W') {
+			if(tile_list.get(i).getPiece() == Rluna.WHITE) {
 				white.add(i);
 			}
 		}
@@ -231,7 +171,7 @@ public class GameState{
 	public void calcGroups(ArrayList<Integer> coll, Boolean called){
 		// Initializes a queue designed to hold a list of tiles in the same group as the current tile.
 		ArrayList<Integer> queue = new ArrayList<Integer>();
-		char coll_colour = tile_list.get(coll.get(0)).getPiece();
+		int coll_colour = tile_list.get(coll.get(0)).getPiece(); 
 		// If the method has never been called before, creates an initial group and adds it to the group list.
 		if(!called) {
 			group = new TileGroup(group_list.size() + 1, coll_colour);
@@ -273,7 +213,7 @@ public class GameState{
 	 * @param current_group The group currently being expanded for this tile to be added to.
 	 * @param queue The list of tiles associated with the current group that are yet to be explored. */
 	public void exploreTile(int tile_ID, TileGroup current_group, ArrayList<Integer> queue){
-		char coll_colour = tile_list.get(tile_ID).getPiece();
+		int coll_colour = tile_list.get(tile_ID).getPiece();
 		// Adds the tile to the current group and alters the tile's attributes to reflect this.
 		current_group.group_tiles.add(tile_ID);
 		tile_list.get(tile_ID).setGroup(current_group.getID());
@@ -281,7 +221,7 @@ public class GameState{
 		// Adds the adjacent tiles of the same colour to the queue.
 		for(int q = 0; q < Tile.NUM_ADJ; q++) {
 			// Checks that the adjacent tile exists (is not off the board edge).
-			if(tile_list.get(tile_ID).getAdjElement(q) != -1) {
+			if(tile_list.get(tile_ID).getAdjElement(q) != Rluna.INVALID) {
 				// Checks that the adjacent tile being examined is of the same colour, hasn't been visited yet and isn't already in the queue.
 				if(tile_list.get(tile_list.get(tile_ID).getAdjElement(q)).getPiece() == coll_colour && !tile_list.get(tile_list.get(tile_ID).getAdjElement(q)).getVisited() && !queue.contains(tile_list.get(tile_ID).getAdjElement(q))) {
 					queue.add(tile_list.get(tile_ID).getAdjElement(q));
@@ -292,8 +232,9 @@ public class GameState{
 	
 	/** Takes as input a group of board pieces of a single colour and then checks whether those pieces form a tripod.
 	 * @param group The group of pieces being checked for a tripod win condition. 
+	 * @param dim The board dimension.
 	 * @return Returns true if the supplied group forms a tripod. */
-	public Boolean tripodChecker(TileGroup group){
+	public Boolean tripodChecker(TileGroup group, int dim){
 		// A group can only form a tripod if it has at least as many members as it takes to stretch across a side plus two.
 		if(group.group_tiles.size() < dim + 2) {
 			return false;
@@ -314,11 +255,7 @@ public class GameState{
 			edge_count = 0;
 		}
 		// A group can only form a tripod if it consists of at least three edge pieces.
-		if(side_tiles.size() < 3) {
-			return false;
-		}
-		// If a group contacts three or more sides, then it has formed a tripod.
-		if(numSides(side_tiles) >= 3) {
+		if(side_tiles.size() >= 3) {
 			return true;
 		} else {
 			return false;
@@ -351,25 +288,11 @@ public class GameState{
 			} else if(tile_list.get(edge_tiles.get(j)).getAdjElement(4) == -1 && tile_list.get(edge_tiles.get(j)).getAdjElement(5) == -1){
 				side5 = 1;
 			}
-		}
-		
+		}	
 		// Counts the number of board edges contacted by the group.
 		int num_sides = side0 + side1 + side2 + side3 + side4 + side5;
 		
 		return num_sides;
-	}
-
-	/** Checks whether the board is full of pieces and thus whether the game is a draw.
-	 * @return Returns true if the game is a draw. */
-	public boolean drawState(){
-		int i = 0;
-		while(i < tile_list.size()){
-			if(tile_list.get(i).getPiece() == '-'){
-				return false;
-			}
-			i++;
-		}
-		return true;
 	}
 	
 	/** Takes as input a group of board pieces of a single colour and then checks whether those pieces form a loop.
@@ -379,196 +302,134 @@ public class GameState{
 		if(group.group_tiles.size()<LOOP_MIN) {
 			return false;
 		}
-		ArrayList<Integer> queue_first = new ArrayList<Integer>();	//Stores the immediately adjacent tiles that don't contain the same colour piece according to priority
-		ArrayList<Integer> queue_track = new ArrayList<Integer>();	//Stores the next adjacent tiles that don't contain the same colour piece in the current path being taken according to priority
+		// Stores the immediately adjacent tiles that don't contain the same colour piece according to priority.
+		ArrayList<Integer> queue_first = new ArrayList<Integer>();
+		// Stores the next adjacent tiles that don't contain the same colour piece in the current path being taken according to priority.
+		ArrayList<Integer> queue_track = new ArrayList<Integer>();
 		queue_first = buildQueueFirst(group);
 		
-		
 		Integer current_id;
-		int num_different_tiles_visited;
-		int num_different_tiles;
 		int edge_side;
-		if(group.getPlayer()=='B'){
 	    
-			while(!queue_first.isEmpty()){
+			while(!queue_first.isEmpty()) {
 				current_id = queue_first.get(0);
 				tile_list.get(current_id).setVisited(true);
-				
-				while(current_id != -1){
-					num_different_tiles_visited = 0;
-					num_different_tiles = 0;
+				while(current_id != -1) {
 					edge_side = 0;
-					for(int i = 0; i < Tile.NUM_ADJ; i++){
-						if(tile_list.get(current_id).getAdjElement(i) != -1 && tile_list.get(tile_list.get(current_id).getAdjElement(i)).getPiece()!='B'){
-							if(!tile_list.get(tile_list.get(current_id).getAdjElement(i)).getVisited()){
-								//add to queue track
-								// look at black priority
-								if(queue_track.isEmpty()){
+					for(int i = 0; i < Tile.NUM_ADJ; i++) {
+						if(tile_list.get(current_id).getAdjElement(i) != -1 && tile_list.get(tile_list.get(current_id).getAdjElement(i)).getPiece()!=group.getPlayer()) {
+							if(!tile_list.get(tile_list.get(current_id).getAdjElement(i)).getVisited()) {
+								// Add to queue track.
+								if(queue_track.isEmpty()) {
 									queue_track.add(tile_list.get(current_id).getAdjElement(i));
-								}else{
-									int k=0;
-									while(k < queue_track.size() && tile_list.get(current_id).getAdjElement(i) != queue_track.get(k) && tile_list.get(tile_list.get(current_id).getAdjElement(i)).getBlackPriority() <= tile_list.get(queue_track.get(k)).getBlackPriority()){
-										k++;
+								} else {
+									int k = 0;
+									if(group.getPlayer() == Rluna.BLACK) {
+										// Look at black priority.
+										while(k < queue_track.size() && tile_list.get(current_id).getAdjElement(i) != queue_track.get(k) && tile_list.get(tile_list.get(current_id).getAdjElement(i)).getBlackPriority() <= tile_list.get(queue_track.get(k)).getBlackPriority()){
+											k++;
+										}	
+									} else {
+										// Look at white priority.
+										while(k < queue_track.size() && tile_list.get(current_id).getAdjElement(i) != queue_track.get(k) && tile_list.get(tile_list.get(current_id).getAdjElement(i)).getWhitePriority() <= tile_list.get(queue_track.get(k)).getWhitePriority()){
+											k++;
+										}
 									}
 									if(k == queue_track.size()){
 										queue_track.add(tile_list.get(current_id).getAdjElement(i));
 									}else if(tile_list.get(current_id).getAdjElement(i) != queue_track.get(k)){
 										queue_track.add(k,tile_list.get(current_id).getAdjElement(i)); // add to kth place
 									}
-								}
-																
-							} else {
-								num_different_tiles_visited++;
+								}							
 							}
-							num_different_tiles++;
-						} else if(tile_list.get(current_id).getAdjElement(i)==-1){
+						} else if(tile_list.get(current_id).getAdjElement(i) == -1){
 							edge_side++;
 						}
 					}
-					//outside for loop
+					// Outside for loop.
 					tile_list.get(current_id).setVisited(true);
 					queue_track.remove(current_id);
-					if(edge_side >= 2){
-						//have hit an edge tile and hence not in a loop
+					// Have hit an edge tile and hence not in a loop.
+					if(edge_side >= 2) {
 						queue_track.clear();
-					} else if(num_different_tiles_visited == num_different_tiles  && queue_track.isEmpty()){
-						//inside a loop
+					} else if(queue_track.isEmpty()) {
+						// Inside a loop.
 						return true;
 					} 
-					
 					queue_first.remove(current_id);
-					if(queue_track.isEmpty()){
+					if(queue_track.isEmpty()) {
 						current_id = -1;
 					} else {
 						current_id = queue_track.get(0);
 					}
 				}
-				
 			}
-		}
-		
-		// looking for white loops
-		if(group.getPlayer()=='W'){
-		    
-			while(!queue_first.isEmpty()){
-				current_id = queue_first.get(0);
-				tile_list.get(current_id).setVisited(true);
-				
-				while(current_id != -1){
-					if(!queue_track.isEmpty()){
-						System.out.println("QUEUE_TRACK:");
-						for(int i=0; i<queue_track.size();i++){
-							System.out.println("["+queue_track.get(i)+"]");
-						}
-					}
-					num_different_tiles_visited = 0;
-					num_different_tiles = 0;
-					edge_side = 0;
-					for(int i = 0; i < Tile.NUM_ADJ; i++){
-						if(tile_list.get(current_id).getAdjElement(i) != -1 && tile_list.get(tile_list.get(current_id).getAdjElement(i)).getPiece()!='W'){
-							if(!tile_list.get(tile_list.get(current_id).getAdjElement(i)).getVisited()){
-								//add to queue track
-								// look at black priority
-								if(queue_track.isEmpty()){
-									queue_track.add(tile_list.get(current_id).getAdjElement(i));
-								}else{
-									int k=0;
-									while(k < queue_track.size() && tile_list.get(current_id).getAdjElement(i) != queue_track.get(k) && tile_list.get(tile_list.get(current_id).getAdjElement(i)).getWhitePriority() <= tile_list.get(queue_track.get(k)).getWhitePriority()){
-										k++;
-									}
-									if(k == queue_track.size()){
-										queue_track.add(tile_list.get(current_id).getAdjElement(i));
-									}else if(tile_list.get(current_id).getAdjElement(i) != queue_track.get(k)){
-										queue_track.add(k,tile_list.get(current_id).getAdjElement(i)); // add to kth place
-									}
-								}
-																
-							} else {
-								num_different_tiles_visited++;
-							}
-							num_different_tiles++;
-						} else if(tile_list.get(current_id).getAdjElement(i)==-1){
-							edge_side++;
-						}
-					}
-					//outside for loop
-					tile_list.get(current_id).setVisited(true);
-					queue_track.remove(current_id);
-					if(edge_side >= 2){
-						//have hit an edge tile and hence not in a loop
-						queue_track.clear();
-					} else if(num_different_tiles_visited == num_different_tiles && queue_track.isEmpty()){ //here is problem with loop checker - it is coming up with loops when it gets to a last tile in queue 2 which happens to be surrounded by visted tiles or black ones and hence guard says it's a loop 
-						//inside a loop
-						return true;
-					}
-					queue_first.remove(current_id);
-					if(queue_track.isEmpty()){
-						current_id = -1;	//Flag to indicate queue_track is empty
-					} else {
-						current_id = queue_track.get(0);
-					}
-				}
-				
-			}
-		}
-
-		return false; // will probably be removed
+		// All immediately adjacent tiles have been visited and they are not on the inside of the loop.
+		return false;
 	}
 	
-	/** Builds the ArrayList that stores the immediately adjacent tiles that don't contain the same colour piece according to priority*/
+	/** Builds the ArrayList that stores the immediately adjacent tiles that don't contain the player's piece 
+	 * with priority determined by how many of the player's pieces surround them.
+	 * @param group The group of tiles that are being checked.
+	 * @return Returns a filled high priority ArrayList. */
 	public ArrayList<Integer> buildQueueFirst(TileGroup group){
 		ArrayList<Integer> queue_first = new ArrayList<Integer>();
 		int current_id;
 		int k;
 		
-		//set queue_first
-		for(int i=0; i<group.group_tiles.size();i++){
-			for(int j = 0; j < Tile.NUM_ADJ; j++){
-				if(group.getPlayer() == 'B'){
-					//look at tiles that are != black
-					current_id = tile_list.get(group.group_tiles.get(i)).getAdjElement(j);
-					if(current_id != -1 && tile_list.get(current_id).getPiece() != 'B'){
-						// look at black priority
-						if(queue_first.isEmpty()){
-							queue_first.add(current_id);
-						}else{
-							k=0;
+		// Set queue_first.
+		for(int i = 0; i < group.group_tiles.size(); i++) {
+			for(int j = 0; j < Tile.NUM_ADJ; j++) {
+				// Look at tiles that are != group.getPlayer().
+				current_id = tile_list.get(group.group_tiles.get(i)).getAdjElement(j);
+				if(current_id != -1 && tile_list.get(current_id).getPiece() != group.getPlayer()) {
+					if(queue_first.isEmpty()) {
+						queue_first.add(current_id);
+					} else {
+						k = 0;
+						if(group.getPlayer() == Rluna.BLACK) {
+							// Look at black priority.
 							while(k < queue_first.size() && current_id != queue_first.get(k) && tile_list.get(current_id).getBlackPriority() <= tile_list.get(queue_first.get(k)).getBlackPriority()){
 								k++;
 							}
-							if(k == queue_first.size()){
-								queue_first.add(current_id);
-							}else if(current_id != queue_first.get(k)){
-								queue_first.add(k,current_id); // add to kth place
-							}
-						}
-					}
-				} else if(group.getPlayer() == 'W'){
-					//look at tiles that are != white
-					current_id = tile_list.get(group.group_tiles.get(i)).getAdjElement(j);
-					if(current_id != -1 && tile_list.get(current_id).getPiece() != 'W'){
-						// look at White priority
-						if(queue_first.isEmpty()){
-							queue_first.add(current_id);
-						}else{
-							k=0;
+						} else {
+							// Look at white priority.
 							while(k < queue_first.size() && current_id != queue_first.get(k) && tile_list.get(current_id).getWhitePriority() <= tile_list.get(queue_first.get(k)).getWhitePriority()){
 								k++;
-							}
-							if(k == queue_first.size()){
-								queue_first.add(current_id);
-							}else if(current_id != queue_first.get(k)){
-								queue_first.add(k,current_id); // add to kth place
-							}
+							}	
+						}
+						if(k == queue_first.size()){
+							queue_first.add(current_id);
+						}else if(current_id != queue_first.get(k)){
+							queue_first.add(k, current_id); // add to kth place in queue_first
 						}
 					}
 				}
 			}
-
 		}
 		return queue_first;
 	}
 	
+	/** Ensures that Visited flag of all the board's tiles is set to not visited (false). */
+	public void resetVistedFlags(){
+		for(int i=0; i<tile_list.size();i++){
+			if(tile_list.get(i).getVisited()){
+				tile_list.get(i).setVisited(false);
+			}
+		}
+	}
+	
+	/** Determines if there is a winner and returns the colour of the winner, or INVALID if there is none. */
+	public int calcResult(){
+		// Uses the flags white_loop, white_tripod, black_loop and black_tripod to determine the result.
+		if(white_loop || white_tripod){
+        	return Rluna.WHITE;
+		} else if(black_loop || black_tripod){
+        	return Rluna.BLACK;
+        } else {
+        	return Rluna.INVALID;
+        }
+	}
 }
 
 

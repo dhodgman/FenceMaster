@@ -3,6 +3,8 @@
  * Authors: Rosa Luna <rluna> and Ryan Hodgman <hodgmanr>
  */
 
+package rluna.fencemaster;
+
 import java.util.ArrayList;
 
 /** Represents a group of connected tiles of the same colour. */
@@ -12,7 +14,7 @@ public class TileGroup{
 	public ArrayList<Integer> group_tiles;
 	
 	/** Stores the colour of this group of tiles. */
-	private char player_colour;
+	private int player_colour;
 	
 	/** Stores the ID of this tile group. */
 	private int ID;
@@ -21,7 +23,7 @@ public class TileGroup{
     /** Creates a new TileGroup object.
      * @param ID The designated ID of this tile group.
      * @param player The colour of the player corresponding to this tile group. */
-    public TileGroup(int ID, char player_colour) {
+    public TileGroup(int ID, int player_colour) {
     	this.ID = ID;
     	this.player_colour = player_colour;
     	group_tiles = new ArrayList<Integer>();
@@ -34,12 +36,12 @@ public class TileGroup{
 	}   
 	
 	/** Returns the colour of the player this group belongs to. */
-	public char getPlayer() {
+	public int getPlayer() {
 		return player_colour;
 	}   
 	
 	/** Sets the colour of the player this group belongs to. */
-	public void setPlayer(char colour) {
+	public void setPlayer(int colour) {
 		player_colour = colour;
 	}   
 }
