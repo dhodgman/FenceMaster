@@ -11,24 +11,14 @@ import java.util.ArrayList;
 public class TileGroup{
 /* The class variables */
 	/** An array that stores all of the tile IDs in this group. */
-	public ArrayList<Integer> group_tiles;
+	private ArrayList<Integer> group_tiles;
 	
 	/** Stores the colour of this group of tiles. */
-	private char player_colour;
+	private int player_colour;
 	
 	/** Stores the ID of this tile group. */
 	private int ID;
-
-/* The constructor(s) */
-    /** Creates a new TileGroup object.
-     * @param ID The designated ID of this tile group.
-     * @param player The colour of the player corresponding to this tile group. */
-    public TileGroup(int ID, char player_colour) {
-    	this.ID = ID;
-    	this.player_colour = player_colour;
-    	group_tiles = new ArrayList<Integer>();
-    }
-
+	
 /* The getter and setter methods */
 	/** Returns the ID of this group. */
 	public int getID() {
@@ -36,12 +26,22 @@ public class TileGroup{
 	}   
 	
 	/** Returns the colour of the player this group belongs to. */
-	public char getPlayer() {
+	public int getPlayer() {
 		return player_colour;
 	}   
 	
-	/** Sets the colour of the player this group belongs to. */
-	public void setPlayer(char colour) {
-		player_colour = colour;
-	}   
+	/** Returns the list of tiles in this group. */
+	public ArrayList<Integer> getTiles() {
+		return group_tiles;
+	} 
+
+/* The constructor(s) */
+    /** Creates a new TileGroup object.
+     * @param ID The designated ID of this tile group.
+     * @param player The colour of the player corresponding to this tile group. */
+    public TileGroup(int ID, int player_colour) {
+    	this.ID = ID;
+    	this.player_colour = player_colour;
+    	group_tiles = new ArrayList<Integer>();
+    }
 }
