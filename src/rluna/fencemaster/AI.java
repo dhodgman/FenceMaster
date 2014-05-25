@@ -46,7 +46,7 @@ public class AI{
 		return best_move;
 	}
 	
-    /** Determines receursively which path is the best choice from the current node.
+    /** Determines recursively which path is the best choice from the current node.
      * @param current_state The game state according to this node on the mini-max tree.
      * @param current_node The node that has just been created by the previous call.
      * @param prior_node The node from which this method is being called.
@@ -55,7 +55,7 @@ public class AI{
 	public Node miniMax(GameState current_state, Node current_node, Node prior_node, Boolean max) {
 		// If the passed node is at the cut-off depth then evaluate and return it.
 		if(current_node.getDepth() == ply) {
-			current_node.setUtility(eval(current_state));
+			current_node.setUtility(eval(current_state, current_node.getMove()));
 			return current_node;
 		}
 		// Creates an array list of all of the immediately possible moves.
@@ -97,7 +97,7 @@ public class AI{
 	
     /** Creates a list of possible moves from a specified game state.
      * @param origin_state The state from which to determine the possible moves.
-     * @param depth The depth of the node that this is determing branches for.
+     * @param depth The depth of the node that this is determining branches for.
      * @return Returns an array list of all the possible moves from this game state. */
 	public ArrayList<Node> calcOps(GameState origin_state, int depth) {
 		ArrayList<Node> ops = new ArrayList<Node>();
@@ -107,7 +107,7 @@ public class AI{
 				int row = origin_state.getTileList().get(i).getRow();
 				int col = origin_state.getTileList().get(i).getCol();
 				Move temp_move;
-				// Creates a move object that represents a piece placed at this postion.
+				// Creates a move object that represents a piece placed at this position.
 				if(swap) {
 					temp_move = new Move(player, true, row, col);
 				} else {
@@ -119,5 +119,99 @@ public class AI{
 			}
 		}
 		return ops;
+	}
+	
+	/** Determines the utility value of the possible move given GameState it creates using a derived heuristic function
+     * @param current_state The GameState that is created by playing the possible move 
+     * @param possible_move The Move who's utility value is being determined
+     * @return Returns an int value that represents the utility value of the possible move*/
+	public int eval(GameState current_state, Move possible_move){
+		// Factors that need to be considered:
+		// is it a corner piece? (where 1 = true, 0 = false) (will effect the start more)
+		int is_corner = isCorner(current_state, possible_move);
+		// is it a side piece? (where 1 = true, 0 = false) (will effect the start more)
+		int is_side = isSide(current_state, possible_move, is_corner);
+		// is it a middle piece? (where 1 = true, 0 = false) (will effect the start more)
+		int is_middle = isMiddle(is_side, is_corner);
+		// white priority (how many white pieces surround the move) (any positive integer)
+		int wp = current_state.getTile(GameState.calcTileID(possible_move.Row,possible_move.Col)).getWhitePriority();
+		// black priority (how many black pieces surround the move) (any positive integer)
+		int bp = current_state.getTile(GameState.calcTileID(possible_move.Row,possible_move.Col)).getBlackPriority();
+		
+		/**Currently not sure of the last two factors
+		 * Not sure if will win should be split up
+		 * progressively estimating if move will lead to a loop or tripod sounds difficult
+		 * blocking also proving to be difficult**/
+		// current_state will already have updated group so check group for possible loop or tripod (more effective closer to the end of the game)
+		int will_win = 0;
+		if(current_state.calcResult()==possible_move.P) {will_win = 1;}
+		// will move block opponent?
+		// Not sure how to check if move is blocking yet
+		
+		// plan is to use these factors as variables, each with their own weight factor
+		// I'm just not sure how to update the weights.
+		// might have to manually change the weights after each run by having the game spit out the new weights
+		return 0;
+	}
+	
+	/** Determines if a move is on a corner tile or not
+     * @param current_state The GameState that is created by playing the possible move 
+     * @param possible_move The Move to be checked if it involves a corner tile 
+     * @return Returns 1 if move is on a corner tile or 0 if it is not*/
+	public int isCorner(GameState current_state, Move possible_move){
+		if(possible_move.Row == 0){
+			if(possible_move.Col == 0 || possible_move.Col == (current_state.getDim()-1)){
+				return 1;
+			}
+			return 0;
+		}
+		if(possible_move.Row == (current_state.getDim()-1)){
+			if(possible_move.Col == 0 || possible_move.Col == (2*current_state.getDim()-2)){
+				return 1;
+			}
+			return 0;
+		}
+		if(possible_move.Row == 2*(current_state.getDim()-1)){
+			if(possible_move.Col == (current_state.getDim()-1) || possible_move.Col == (2*current_state.getDim()-2)){
+				return 1;
+			}
+			return 0;
+		}
+		return 0;
+	}
+	
+	/** Determines if a move is on a side tile or not
+     * @param current_state The GameState that is created by playing the possible move 
+     * @param possible_move The Move to be checked if it involves a side tile
+     * @param is_corner Flags if the move has been already been identified as a corner piece 
+     * @return Returns 1 if move is on a side tile or 0 if it is not*/
+	public int isSide(GameState current_state, Move possible_move, int is_corner){
+		// Checks if move has already been identified as a corner piece
+		if(is_corner==1){ return 0;}
+		
+		//Calculates how many adjacent tiles are INVALID tiles
+		int invalid_count = 0;
+		for(int i=0; i < Tile.NUM_ADJ; i++){
+			if(current_state.getTile(GameState.calcTileID(possible_move.Row,possible_move.Col)).getAdjElement(i) == -1) {
+				invalid_count++;
+			}
+		}
+		
+		// If there are 2 invalid tiles connected to the tile, then the tile is a side piece 
+		if(invalid_count == 2){ return 1; }
+
+		return 0;
+	}
+	
+	/** Determines if a move is on a middle tile or not
+     * @param is_side Flags if the move has been already been identified as a side piece 
+     * @param is_corner Flags if the move has been already been identified as a corner piece 
+     * @return Returns 1 if move is on a middle tile or 0 if it is not*/
+	public int isMiddle(int is_side, int is_corner){
+		// Checks if the move has already been identified as a side piece or a corner piece
+		if(is_side==0 && is_corner==0){
+			return 1;
+		}
+		return 0;
 	}
 }

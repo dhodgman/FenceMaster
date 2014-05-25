@@ -31,7 +31,12 @@ public class GameState {
     	return tile_list;
     }
     
-    /** Returns the tile list. */
+    /** Returns the tile specified by the ID value. [added to be used by AI]*/
+    public Tile getTile(int ID) {
+    	return tile_list.get(ID);
+    }
+    
+    /** Returns the group list. */
     public ArrayList<TileGroup> getGroupList() {
     	return group_list;
     }
