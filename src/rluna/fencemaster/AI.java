@@ -61,7 +61,7 @@ public class AI{
 		// Creates an array list of all of the immediately possible moves.
 		ArrayList<Node> ops = calcOps(current_state, current_node.getDepth() + 1);
 		// Iterates through the possible moves and determine which move has the highest/lowest utility.
-		Node best_path;
+		Node best_path = new Node(0);
 		for(int i = 0; i < ops.size(); i++) {
 			// Creates a new game state that represents the board after this move has been made.
 			GameState new_state = current_state;
@@ -134,9 +134,9 @@ public class AI{
 		// is it a middle piece? (where 1 = true, 0 = false) (will effect the start more)
 		int is_middle = isMiddle(is_side, is_corner);
 		// white priority (how many white pieces surround the move) (any positive integer)
-		int wp = current_state.getTile(GameState.calcTileID(possible_move.Row,possible_move.Col)).getWhitePriority();
+		int wp = current_state.getTileList().get(GameState.calcTileID(possible_move.Row,possible_move.Col)).getWhitePriority();
 		// black priority (how many black pieces surround the move) (any positive integer)
-		int bp = current_state.getTile(GameState.calcTileID(possible_move.Row,possible_move.Col)).getBlackPriority();
+		int bp = current_state.getTileList().get(GameState.calcTileID(possible_move.Row,possible_move.Col)).getBlackPriority();
 		
 		/**Currently not sure of the last two factors
 		 * Not sure if will win should be split up
@@ -192,7 +192,7 @@ public class AI{
 		//Calculates how many adjacent tiles are INVALID tiles
 		int invalid_count = 0;
 		for(int i=0; i < Tile.NUM_ADJ; i++){
-			if(current_state.getTile(GameState.calcTileID(possible_move.Row,possible_move.Col)).getAdjElement(i) == -1) {
+			if(current_state.getTileList().get(GameState.calcTileID(possible_move.Row,possible_move.Col)).getAdjElement(i) == -1) {
 				invalid_count++;
 			}
 		}

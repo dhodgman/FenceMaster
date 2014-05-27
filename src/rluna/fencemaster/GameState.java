@@ -31,11 +31,6 @@ public class GameState {
     	return tile_list;
     }
     
-    /** Returns the tile specified by the ID value. [added to be used by AI]*/
-    public Tile getTile(int ID) {
-    	return tile_list.get(ID);
-    }
-    
     /** Returns the group list. */
     public ArrayList<TileGroup> getGroupList() {
     	return group_list;
@@ -421,5 +416,9 @@ public class GameState {
 				}
 			}
 		}
+    	for(int i = 0; i < tile_list.size(); i++) {
+    		// Reassign the black/white priorities for each tile on the board.
+    		tile_list.get(i).calcPriorities(tile_list);
+    	}
 	}
 }
