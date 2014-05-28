@@ -56,7 +56,6 @@ public class Referee implements Piece{
 
 		while(Continue && boardEmptyPieces>0)
 		{			
-
 			lastPlayedMove=P1.makeMove();
 			NumberofMoves++;
 			System.out.println("Putting Piece "+lastPlayedMove.Row+":"+lastPlayedMove.Col+" by "+lastPlayedMove.P);
@@ -92,7 +91,7 @@ public class Referee implements Piece{
 					Continue=false;			
 			}
 		}
-		System.out.println("--------------------------------------");
+		System.out.println("----------------------------------");
 		System.out.println("P2 Board is :");
 		P2.printBoard(System.out);
 		System.out.println("P1 Board is :");

@@ -51,7 +51,7 @@ public class GameState {
      * @param dim The board dimension. */
     public GameState(int dim) {
     	GameState.dim = dim;
-    	// Initialises the tiles representing the board state.
+    	// Initializes the tiles representing the board state.
     	initTiles();
     	for(int i = 0; i < tile_list.size(); i++) {
     		// Assign the adjacency record for each tile on the board.
@@ -60,6 +60,24 @@ public class GameState {
     		tile_list.get(i).calcPriorities(tile_list);
     	}
     	group_list = new ArrayList<TileGroup>();
+    }
+    
+    /** Creates a new GameState object that is a copy of an old one. 
+     * @param state The old GameState object that is being copied into this one. */
+    public GameState(GameState state) {
+    	GameState.dim = state.getDim();
+    	// Initializes the tiles representing the board state.
+    	initTiles();
+    	for(int i = 0; i < tile_list.size(); i++) {
+    		// Assign the adjacency record for each tile on the board.
+    		tile_list.get(i).setAdj(calcAdj(i));
+    		// Assign the black/white priorities for each tile on the board.
+    		tile_list.get(i).calcPriorities(tile_list);
+    	}    	
+    	group_list = new ArrayList<TileGroup>();
+    	for(int q = 0; q < tile_list.size(); q++) {
+    		updateState(q, state.getTileList().get(q).getPiece());
+    	}
     }
     
 /* The class methods */
@@ -107,18 +125,11 @@ public class GameState {
 		}
 		// Creates an array to store the ID of all of the tiles in the group that are on the edge of the board, but are not corner pieces.
 		ArrayList<Integer> side_tiles = new ArrayList<Integer>();
-		int edge_count = 0;
 		for(int i = 0; i < group.getTiles().size(); i++) {
-			for(int q = 0; q < Tile.NUM_ADJ; q++) {
-				if(tile_list.get(group.getTiles().get(i)).getAdjElement(q) == -1) {
-					edge_count++;
-				}
-			}
-			// If a tile is an edge piece but not a corner piece then two of its adjacency entries will equal -1.
-			if(edge_count == 2) {
+			// If a tile is an edge piece but not a corner piece then isEdge() will return 1.
+			if(isEdge(group.getTiles().get(i), Tile.SIDE) == 1){
 				side_tiles.add(group.getTiles().get(i));
 			}
-			edge_count = 0;
 		}
 		// A group can only form a tripod if it consists of at least three edge pieces.
 		if(side_tiles.size() >= 3) {
@@ -138,7 +149,6 @@ public class GameState {
 		int side3 = 0;
 		int side4 = 0;
 		int side5 = 0;
-		
 		// Identifies which side of the board each edge piece contacts.
 		for(int j = 0; j < edge_tiles.size(); j++) {
 			if(tile_list.get(edge_tiles.get(j)).getAdjElement(0) == -1 && tile_list.get(edge_tiles.get(j)).getAdjElement(5) == -1) {
@@ -157,7 +167,6 @@ public class GameState {
 		}	
 		// Counts the number of board edges contacted by the group.
 		int num_sides = side0 + side1 + side2 + side3 + side4 + side5;
-		
 		return num_sides;
 	}
 	
@@ -349,22 +358,21 @@ public class GameState {
     		// Sets the record entry for adjacency position 'i' to the ID of the tile in that position, or INVALID if out of bounds.
     		adj_record[i] = calcTileID(row, col);
     	}
-    	// Prints out the adjacency array for each tile on the board.
-    	if(Rluna.DEBUG) {
-    		for(int q = 0; q < Tile.NUM_ADJ; q++) {
-    			System.out.println(adj_record[q]);
-    		}
-    		System.out.println("-----");
-    	}
     	return adj_record;
     } 
     
-	/** Upates the game state given a tile ID that represents a new move. 
+	/** Updates the game state given a tile ID that represents a new move. 
 	 * @param tile_ID The ID of the new piece being placed on the board. 
 	 * @param player The owner of the piece being placed. */
 	public void updateState(int tile_ID, int player) {
-		// Updates the colour of pice occupying the specified tile.
-		tile_list.get(tile_ID).setPiece(player);
+		tile_list.get(tile_ID).setPiece(player);		
+		// Updates the black/white priorities for each tile on the board.
+    	for(int i = 0; i < tile_list.size(); i++) {
+    		tile_list.get(i).calcPriorities(tile_list);
+    	}
+    	if(player == Rluna.EMPTY) {
+    		return;
+    	}
 		// Update the group list.
 		if(group_list.isEmpty()) {
 			// This is the first piece to be placed, so create a new group.
@@ -404,21 +412,35 @@ public class GameState {
 				for(int i = 1; i < adj_groups.size(); i++) {
 					for(int q = 0; q < group_list.get(adj_groups.get(i)).getTiles().size(); q++) {
 						// Add all of the newly connected tiles from the 2nd (and possibly third) group(s) to a temporary ID list.
-						temp_tiles.add(group_list.get(adj_groups.get(i)).getTiles().get(q));
+						temp_tiles.add(group_list.get(adj_groups.get(i)).getTiles().get(q)); //memory leak!
 					}
 					// Remove the later groups from the group_list, as they are about to be merged.
 					group_list.remove((adj_groups.get(i)));
 				}
 				for(int i = 0; i < temp_tiles.size(); i++) {
-					// Add all of the newly connected tiles to the first discoverd adjacent group.
+					// Add all of the newly connected tiles to the first discovered adjacent group.
 					tile_list.get(temp_tiles.get(i)).setGroup(adj_groups.get(0));
 					group_list.get(adj_groups.get(0)).getTiles().add(temp_tiles.get(i));
 				}
 			}
 		}
-    	for(int i = 0; i < tile_list.size(); i++) {
-    		// Reassign the black/white priorities for each tile on the board.
-    		tile_list.get(i).calcPriorities(tile_list);
-    	}
+	}
+	
+	/** Determines if a specified tile is a tile of specified edge type.
+     * @param tile_ID The ID number of the tile being tested.
+     * @param edge_type The type of edge piece being tested for.
+     * @return Returns 1 if it is an instance of the specified tile type or 0 if otherwise. */
+	public int isEdge(int tile_ID, int edge_type) {		
+		// Keeps count of how many adjacent tiles are INVALID tiles.
+		int invalid_count = 0;
+		// Calculates how many adjacent tiles are INVALID tiles.
+		for(int i=0; i < Tile.NUM_ADJ; i++) {
+			if(tile_list.get(tile_ID).getAdjElement(i) == Rluna.INVALID) {
+				invalid_count++;
+			}
+		}		
+		// If the count of invalid adjacent tiles is equal to the specified edge_type return 1.
+		if(invalid_count == edge_type) {return 1;}
+		return 0;
 	}
 }

@@ -14,6 +14,12 @@ public class Tile implements Piece {
     /** A constant representing the number of adjacent tiles. */
     public static final int NUM_ADJ = 6;
     
+    /** A constant representing the number of adjacent invalid tiles a corner tile has. */
+    public static final int CORNER = 3;
+    
+    /** A constant representing the number of adjacent invalid tiles a side tile has. */
+    public static final int SIDE = 2;
+    
     /** Record of the piece occupying this tile (WHITE: 1, BLACK: 2, EMPTY: 0, INVALID: -1). */
     private int piece;
     

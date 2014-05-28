@@ -5,6 +5,7 @@
 package rluna.fencemaster;
 
 import java.io.PrintStream;
+
 import aiproj.fencemaster.*;
 
 /** The player class containing our AI code. */
@@ -66,12 +67,6 @@ public class Rluna implements Player, Piece {
 		move_number = 0;
 		state = new GameState(dim);
 		AI = new AI(piece);
-        // Prints out the full list of tiles and their attributes (piece type, x-coord and y-coord).
-        if(DEBUG) {
-        	for(int t = 0; t < state.getTileList().size(); t++) {
-                System.out.println(state.getTileList().get(t).getPiece() + ", [" + state.getTileList().get(t).getRow() + ","+ state.getTileList().get(t).getCol() + "]");
-        	}
-        }
 		return 0;
 	}
 
